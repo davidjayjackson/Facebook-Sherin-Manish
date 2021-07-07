@@ -1,0 +1,110 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+This is an [R Markdown](http://rmarkdown.rstudio.com) Notebook. When you execute code within the notebook, the results appear beneath the code. 
+
+Try executing this chunk by clicking the *Run* button within the chunk or by placing your cursor inside it and pressing *Ctrl+Shift+Enter*. 
+
+```{r}
+plot(cars)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+
+```{r}
+# if (!require("drat")) {
+#      install.packages("drat")
+#      library("drat")
+#  }
+#  drat::addRepo("kjhealy")
+#  install.packages("covdata")
+#  drat::addRepo("kjhealy")
+
+
+library(moments)
+library(ggplot2)
+library(readr)
+library(covdata)
+
+
+
+
+f = read.csv("C:/Users/sheri/Desktop/DV/applemobilitytrends-2021-06-13.csv")
+fl = f[f$region=="Germany",]
+
+
+
+
+Walking <- apple_mobility %>% filter(country == "Germany",apple_mobility$transportation_type == "walking")  
+
+
+
+
+Walking <- apple_mobility %>% filter(country == "Germany",transportation_type == "walking")  
+transit <- apple_mobility %>% filter(country == "Germany",transportation_type == "transit") 
+driving <- apple_mobility %>% filter(country == "Germany",transportation_type == "driving")
+
+
+
+
+hist(Data_for_Walking$score,main="Histogram for walking ",xlab="x",ylab="Frequency",col=5)
+boxplot(Data_for_Walking$score,main="Boxplot")
+
+hist(transit$score,main="Histogram for walking ",xlab="x",ylab="Frequency",col=5)
+boxplot(transit$score,main="Boxplot")
+
+hist(driving$score,main="Histogram for walking ",xlab="x",ylab="Frequency",col=5)
+boxplot(driving$score,main="Boxplot")
+
+
+
+ggplot(Data_for_Walking , aes(x=score, fill=country)) + 
+  geom_histogram(color="green", fill="greenyellow", position="identity",alpha=0.5) +
+  geom_vline(data= Data_for_Walking ,aes(xintercept= mean_col(score)), 
+  color="blue",linetype="dashed",size=1) +
+  theme(legend.position="right" ,legend.background = element_rect(fill="lightblue",size=0.5, linetype="solid"))+
+  labs(title="Mobility by walking:", x ="scale")
+
+
+
+#----------------represent data related to Drving in Germany------------------------------------
+Data_for_driving <- apple_mobility %>% filter(country == "Germany",transportation_type == "driving")
+
+ggplot(Data_for_driving , aes(x=score, fill=country)) + 
+  geom_histogram(color="darkred", fill="#E69F00",position="identity",alpha=0.5) +
+  geom_vline(data= Data_for_Walking ,aes(xintercept= mean_col(score)), 
+  color="blue",linetype="dashed",size=1)+
+  theme(legend.position="right" ,legend.background = element_rect(fill="lightblue", size=0.5, linetype="solid"))+
+  labs(title="Mobility by Drving:", x ="scale")
+
+
+#----------------represent data related to Transit in Germany------------------------------------
+
+Data_for_transit <- apple_mobility %>% filter(country == "Germany",transportation_type == "transit")
+
+ggplot(Data_for_transit , aes(x=score, fill=region, color=country)) + 
+  geom_histogram(color="darkblue", fill="lightblue",position="identity",alpha=0.5) +
+  geom_vline(data= Data_for_Walking ,aes(xintercept= mean_col(score)), 
+  color="blue",linetype="dashed",size=1)+
+  theme(legend.position="right" ,legend.background = element_rect(fill="lightblue", size=0.5, linetype="solid"))+
+  labs(title="Mobility by Transit:", x ="scale")
+
+
+
+
+
+#pie chart 
+x<-c(2147943.09, 986500.02, 2200768.39, 93844.34, 1513888.53, 166397.34,  913954.98)
+pie(x,c("North-Rhine", "Baden", "Bavaria","Breman", "Hesse", "Lower-saxony", "saxony"),col=c(1,2,3,4,5,6,7))
+#scatter plots
+scatter.smooth(driving$score,fl$Total.2,col=1,xlab = "Janaury-2020",ylab="Feburary-2020",main="scatter plot Between Months")
+
+
+```
