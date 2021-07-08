@@ -17,7 +17,6 @@ library(moments)
 library(ggplot2)
 library(readr)
 library(scales)
-# devtools::install_github("kjhealy/covdata")
 library(covdata)
 library(lubridate)
 
@@ -26,18 +25,20 @@ library(lubridate)
 rm(list=ls())
 
 apple_mobility <- read.csv("./applemobilitytrends-2021-07-06.csv")
-apple_mobility <- apple_mobility %>% select(- alternative_name, -geo_type, -alternative_name, -region,-sub.region)
+apple_mobility <- apple_mobility %>% select(- alternative_name, -geo_type, -region,-sub.region)
 apple_mobility <- apple_mobility %>% select(country,transportation_type,X2020.01.14:X2021.07.06)
-
-apple_longer <- apple_mobility %>% pivot_longer(col = X2020.01.14:X2021.07.06)
-short_list <- apple_longer %>% filter(country %in% c("Germany","Sweden"))
 ```
 ```{r}
- short_list$name <- gsub("X","",short_list$name)
- short_list$name <- gsub('\\.', '-', short_list$name)
- short_list$name <- as.Date(short_list$name)
- 
+apple_longer <- apple_mobility %>% pivot_longer(col = X2020.01.14:X2021.07.06,names_to ="Date")
+short_list <- apple_longer %>% filter(country %in% c("Germany","France")) %>% na.omit()
 ```
+```{r}
+short_list$Date <- gsub("X","",short_list$Date)
+short_list$Date <- gsub('\\.', '-', short_list$Date)
+short_list$Date <- as.Date(short_list$Date)
+
+```
+
 
 #### Descriptive Statistics
 * list
@@ -57,14 +58,53 @@ germany_driving <- short_list %>% dplyr::filter(country == "Germany",transportat
 ```
 
 ```{r}
-Sweden_Walking <- short_list %>% dplyr::filter(country == "Sweden",transportation_type == "walking")  
-Sweden_transit <- short_list %>% dplyr::filter(country == "Sweden",transportation_type == "transit") 
-Sweden_driving <- short_list %>% dplyr::filter(country == "Sweden",transportation_type == "driving")
+France_Walking <- short_list %>% dplyr::filter(country == "France",transportation_type == "walking")  
+France_transit <- short_list %>% dplyr::filter(country == "France",transportation_type == "transit") 
+France_driving <- short_list %>% dplyr::filter(country == "France",transportation_type == "driving")
 
 ```
 
+## Monthly Total
+
+```{r}
+# Thanks to Arun Chavan at Slack.com for code fix
+# France <- short_list %>% filter(country =="France")
+monthly_totals <-short_list %>%
+  group_by(country,transportation_type, Month = floor_date(Date, "month")) %>%
+  summarise(Total = sum(value),
+            Mean = mean(value),
+            Median = median(value)) %>% 
+  ungroup() %>%   mutate(Percent = Mean / sum(Mean))
+```
+
+```{r}
+ggplot(monthly_totals) + geom_line(aes(x=Month,y=Total,col=country)) +
+  scale_y_continuous(label =comma ) + labs(title = " MonthlyTotals by Country")
+
+ggplot(monthly_totals) + geom_line(aes(x=Month,y=Mean,col=country)) +
+  scale_y_continuous(label =comma ) + labs(title = "Month Means by Country")
+
+ggplot(monthly_totals) + geom_line(aes(x=Month,y=Median,col=country)) +
+  scale_y_continuous(label =comma ) + labs(title = "Monthly Median by Country")
+
+ggplot(monthly_totals) + geom_line(aes(x=Month,y=Percent,col=country)) +
+  scale_y_continuous(label =percent ) + labs(title = "Monthly Percent by Country")
+```
+
+## By Total by transportation_type
+
+```{r}
+ggplot(monthly_totals) + geom_area(aes(x=Month,y=Total,fill=country)) +
+  scale_y_continuous(label =comma ) + labs(title = " MonthlyTotals by Country") +
+  theme(axis.text.x = element_text(angle = 45)) + 
+  scale_x_date(date_labels = "%B %Y") +
+  facet_wrap(~transportation_type)
+``` 
+
+
 ### Analysis of Germany
 Germany Walking
+
 ```{r}
 summary(germany_Walking)
 ```
@@ -194,29 +234,18 @@ ggplot(short_list) + geom_histogram(aes(x=value,fill=transportation_type)) +
 
 ```{r}
 short_list %>% filter(transportation_type =="driving") %>%
-ggplot() + geom_col(aes(x=name,y=value,fill=country)) +
+ggplot() + geom_col(aes(x=Date,y=value,fill=country)) +
   labs(title = "Driving") + scale_y_continuous(labels = comma)
 
 short_list %>%
-ggplot() + geom_col(aes(x=name,y=value,fill=transportation_type)) + 
+ggplot() + geom_col(aes(x=Date,y=value,fill=transportation_type)) + 
   facet_wrap(~country)
 ```
 
-## Monthly Total
-
-```{r}
-monthly_totals <-short_list %>%
-group_by(country, Month = floor_date(name,"month")) %>%
-  summarise(Total = sum(value),
-            Mean = mean(value),
-            Median = median(value),
-            Percent = value/sum(value)) %>% ungroup()
-
-```
 
 ```{r}
 short_list %>% filter(transportation_type =="driving", country =="Germany") %>%
-ggplot() + geom_point(aes(x=name,y=value,fill=country)) +
+ggplot() + geom_point(aes(x=Date,y=value,fill=country)) +
   labs(title = "Driving") + scale_y_continuous(labels = comma) +
-  geom_smooth(data= short_list,aes(x=name,y=value),span=0.10)
+  geom_smooth(data= short_list,aes(x=Date,y=value),span=0.10)
 ```
