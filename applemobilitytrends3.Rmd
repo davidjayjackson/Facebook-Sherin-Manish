@@ -2,7 +2,9 @@
 title: "A Analysis of Transportation Trends Before and After Trends"
 author: "Sherin Manish"
 date: "7/8/2021"
-output: html_document
+output: 
+  html_document: 
+    fig_width: 9
 ---
 
 ```{r setup, include=FALSE}
@@ -18,7 +20,7 @@ library(flextable)
 library(dlookr)
 ```
 
-### Begom Data Import and Cleaning and Calculate Monthly Totals
+### Begin Data Import and Cleaning and Calculate Monthly Totals
 
 * imported the file to RStudio 
 * removed columns like alternative_name, geo_type,alternative name,region and sub region * selected and collected datas like Country, transportation_type and date 
@@ -29,7 +31,7 @@ library(dlookr)
 rm(list=ls())
 
 apple_mobility <- read.csv("./applemobilitytrends-2021-07-06.csv")
-apple_mobility <- apple_mobility %>% select(- alternative_name, -geo_type, -region,-sub.region)
+apple_mobility <- apple_mobility %>% select(- alternative_name, -geo_type, -region,sub.region)
 apple_mobility <- apple_mobility %>% select(country,transportation_type,X2020.01.14:X2021.07.06)
 ```
 ```{r}
@@ -44,14 +46,14 @@ short_list$Date <- as.Date(short_list$Date)
 
 
 ```{r}
-germany_Walking <- short_list %>% dplyr::filter(country == "Germany",transportation_type == "walking")  
+germany_walking <- short_list %>% dplyr::filter(country == "Germany",transportation_type == "walking")  
 germany_transit <- short_list %>% dplyr::filter(country == "Germany",transportation_type == "transit") 
 germany_driving <- short_list %>% dplyr::filter(country == "Germany",transportation_type == "driving")
 
 ```
 
 ```{r}
-France_Walking <- short_list %>% dplyr::filter(country == "France",transportation_type == "walking")  
+France_walking <- short_list %>% dplyr::filter(country == "France",transportation_type == "walking")  
 France_transit <- short_list %>% dplyr::filter(country == "France",transportation_type == "transit") 
 France_driving <- short_list %>% dplyr::filter(country == "France",transportation_type == "driving")
 
@@ -68,13 +70,14 @@ monthly_totals <-short_list %>%
   ungroup() %>%   mutate(Percent = Mean / sum(Mean))
 ```
 
-#### Descriptive Statistics and Data Vizualization
+### Descriptive Statistics and Data Vizualization
 
 Summary can give us the descriptive statistics to find like Mean, Median, First quantile and third quantile of the number of people using Transit in Germany 
 Germany Transit
 
 
-### Analysis of Gemany's Transportation Trend
+#### Analysis of Gemany's Transportation Trend
+
 * Numeric Variables
 
 ```{r}
@@ -88,18 +91,155 @@ short_list %>% filter(country =="Germany") %>% diagnose_numeric() %>% flextable(
 short_list %>% filter(country =="Germany") %>% diagnose_category() %>% flextable()
   
 ```
+```{r}
+short_list %>% filter(country =="Germany") %>% ggplot() +
+  geom_point(aes(x=Date,y=value,col = transportation_type)) +
+  scale_y_continuous(label = comma) +
+  labs(title = "Germany:  Analysis of Transortation Trends By Date") +
+  facet_wrap(~transportation_type)
+```
+
+#### Histograms (hist()):
+
+we have plotted a histogram for Germany in terms of walking, transit and driving, we have assigned x and y axis as Frequency and col for showing colour
+###boxplot()- we have plotted a histogram for Germany in terms of walking, transit and driving
+
+```{r}
+
+germany_walking <- na.omit(germany_walking)
+ggplot(germany_walking , aes(x=value, fill=country)) + 
+  geom_histogram(color="green", fill="greenyellow", position="identity",alpha=0.5) +
+  geom_vline(data= germany_walking ,aes(xintercept= mean(value)), 
+  color="blue",linetype="dashed",size=1) +
+  theme(legend.position="right" ,legend.background = element_rect(fill="lightblue",size=0.5, linetype="solid"))+
+  labs(title="Germany: Mobility by walking:", x ="scale")
+
+```
+```{r}
+
+germany_driving <- na.omit(germany_driving)
+ggplot(germany_driving , aes(x=value, fill=country)) + 
+  geom_histogram(color="green", fill="greenyellow", position="identity",alpha=0.5) +
+  geom_vline(data= germany_driving ,aes(xintercept= mean(value)), 
+  color="blue",linetype="dashed",size=1) +
+  theme(legend.position="right" ,legend.background = element_rect(fill="lightblue",size=0.5, linetype="solid"))+
+  labs(title="Germany: Mobility by walking:", x ="scale")
+
+```
+
+```{r}
+
+germany_transit <- na.omit(germany_transit)
+ggplot(germany_transit , aes(x=value, fill=country)) + 
+  geom_histogram(color="green", fill="greenyellow", position="identity",alpha=0.5) +
+  geom_vline(data= germany_transit ,aes(xintercept= mean(value)), 
+  color="blue",linetype="dashed",size=1) +
+  theme(legend.position="right" ,legend.background = element_rect(fill="lightblue",size=0.5, linetype="solid"))+
+  labs(title="Germany: Mobility by Transit:", x ="scale")
+
+```
+
+#### Boxplots
+
+"A boxplot is a standardized way of displaying the distribution of data based on a five number summary (“minimum”, first quartile (Q1), median, third quartile (Q3), and “maximum”). ... It can also tell you if your data is symmetrical, how tightly your data is grouped, and if and how your data is skewed" (Source: https://towardsdatascience.com/understanding-boxplots-5e2df7bcbd51)
+
+#### Germany's Boxplots
+
+```{r}
+
+short_list %>% na.omit() %>% filter(country == "Germany") %>%
+ggplot(aes(x=value)) + 
+  geom_boxplot(color="green", fill="greenyellow", position="identity",alpha=0.5) +
+  geom_vline(aes(xintercept= mean(value)), 
+  color="blue",linetype="dashed",size=1) +
+  theme(legend.position="right" ,legend.background = element_rect(fill="lightblue",size=0.5, linetype="solid"))+
+  labs(title="Germany Mobility :", x ="scale") +
+  facet_wrap(~transportation_type) + coord_flip()
+
+```
 
 
 #### France: Descriptive Statistics and Data Vizualization
+
 * Numeric Variables
 
 ```{r}
 short_list %>% filter(country =="France") %>% diagnose_numeric() %>% flextable()
   
 ```
+
 * categorical Variables
 
 ```{r}
 short_list %>% filter(country =="France") %>% diagnose_category() %>% flextable()
   
+```
+
+```{r}
+short_list %>% filter(country =="France") %>% ggplot() +
+  geom_point(aes(x=Date,y=value,col = transportation_type)) +
+  scale_y_continuous(label = comma) +
+  labs(title = "France:  Analysis of Transortation Trends by Date") +
+  facet_wrap(~transportation_type)
+  
+```
+
+```{r}
+
+#pie chart 
+x<-c(2147943.09, 986500.02, 2200768.39, 93844.34, 1513888.53, 166397.34,  913954.98)
+pie(x,c("North-Rhine", "Baden", "Bavaria","Breman", "Hesse", "Lower-saxony", "saxony"),col=c(1,2,3,4,5,6,7))
+
+```
+
+#### France's Histograms:
+
+```{r}
+
+France_walking <- na.omit(France_walking)
+ggplot(France_walking , aes(x=value, fill=country)) + 
+  geom_histogram(color="green", fill="greenyellow", position="identity",alpha=0.5) +
+  geom_vline(data= France_walking ,aes(xintercept= mean(value)), 
+  color="blue",linetype="dashed",size=1) +
+  theme(legend.position="right" ,legend.background = element_rect(fill="lightblue",size=0.5, linetype="solid"))+
+  labs(title="France: Mobility by walking:", x ="scale")
+
+```
+```{r}
+
+France_driving <- na.omit(France_driving)
+ggplot(France_driving , aes(x=value, fill=country)) + 
+  geom_histogram(color="green", fill="greenyellow", position="identity",alpha=0.5) +
+  geom_vline(data= France_driving ,aes(xintercept= mean(value)), 
+  color="blue",linetype="dashed",size=1) +
+  theme(legend.position="right" ,legend.background = element_rect(fill="lightblue",size=0.5, linetype="solid"))+
+  labs(title="France: Mobility by Driving:", x ="scale")
+
+```
+
+```{r}
+
+France_transit <- na.omit(France_transit)
+ggplot(France_transit , aes(x=value, fill=country)) + 
+  geom_histogram(color="green", fill="greenyellow", position="identity",alpha=0.5) +
+  geom_vline(data= France_transit ,aes(xintercept= mean(value)), 
+  color="blue",linetype="dashed",size=1) +
+  theme(legend.position="right" ,legend.background = element_rect(fill="lightblue",size=0.5, linetype="solid"))+
+  labs(title="France: Mobility by Transit:", x ="scale")
+
+```
+
+#### France's Box Plot
+
+```{r}
+
+short_list %>% na.omit() %>% filter(country == "France") %>%
+ggplot(aes(x=value)) + 
+  geom_boxplot(color="green", fill="greenyellow", position="identity",alpha=0.5) +
+  geom_vline(aes(xintercept= mean(value)), 
+  color="blue",linetype="dashed",size=1) +
+  theme(legend.position="right" ,legend.background = element_rect(fill="lightblue",size=0.5, linetype="solid"))+
+  labs(title="Germany Mobility :", x ="scale") +
+  facet_wrap(~transportation_type) + coord_flip()
+
 ```
