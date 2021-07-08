@@ -1,0 +1,105 @@
+---
+title: "A Analysis of Transportation Trends Before and After Trends"
+author: "Sherin Manish"
+date: "7/8/2021"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE,message = FALSE,error = FALSE)
+
+library(tidyr)
+library(dplyr)
+library(ggplot2)
+library(readr)
+library(scales)
+library(lubridate)
+library(flextable)
+library(dlookr)
+```
+
+### Begom Data Import and Cleaning and Calculate Monthly Totals
+
+* imported the file to RStudio 
+* removed columns like alternative_name, geo_type,alternative name,region and sub region * selected and collected datas like Country, transportation_type and date 
+* used pivot_longer() is to optimise for ease of data entry or ease of comparison rather than ease of analysis
+* Used gsub() function to clean up dates
+
+```{r}
+rm(list=ls())
+
+apple_mobility <- read.csv("./applemobilitytrends-2021-07-06.csv")
+apple_mobility <- apple_mobility %>% select(- alternative_name, -geo_type, -region,-sub.region)
+apple_mobility <- apple_mobility %>% select(country,transportation_type,X2020.01.14:X2021.07.06)
+```
+```{r}
+apple_longer <- apple_mobility %>% pivot_longer(col = X2020.01.14:X2021.07.06,names_to ="Date")
+short_list <- apple_longer %>% filter(country %in% c("Germany","France")) %>% na.omit()
+```
+```{r}
+short_list$Date <- gsub("X","",short_list$Date)
+short_list$Date <- gsub('\\.', '-', short_list$Date)
+short_list$Date <- as.Date(short_list$Date)
+```
+
+
+```{r}
+germany_Walking <- short_list %>% dplyr::filter(country == "Germany",transportation_type == "walking")  
+germany_transit <- short_list %>% dplyr::filter(country == "Germany",transportation_type == "transit") 
+germany_driving <- short_list %>% dplyr::filter(country == "Germany",transportation_type == "driving")
+
+```
+
+```{r}
+France_Walking <- short_list %>% dplyr::filter(country == "France",transportation_type == "walking")  
+France_transit <- short_list %>% dplyr::filter(country == "France",transportation_type == "transit") 
+France_driving <- short_list %>% dplyr::filter(country == "France",transportation_type == "driving")
+
+```
+
+```{r}
+# Thanks to Arun Chavan at Slack.com for code fix
+# France <- short_list %>% filter(country =="France")
+monthly_totals <-short_list %>%
+  group_by(country,transportation_type, Month = floor_date(Date, "month")) %>%
+  summarise(Total = sum(value),
+            Mean = mean(value),
+            Median = median(value)) %>% 
+  ungroup() %>%   mutate(Percent = Mean / sum(Mean))
+```
+
+#### Descriptive Statistics and Data Vizualization
+
+Summary can give us the descriptive statistics to find like Mean, Median, First quantile and third quantile of the number of people using Transit in Germany 
+Germany Transit
+
+
+### Analysis of Gemany's Transportation Trend
+* Numeric Variables
+
+```{r}
+short_list %>% filter(country =="Germany") %>% diagnose_numeric() %>% flextable()
+  
+```
+
+* categorical Variables
+
+```{r}
+short_list %>% filter(country =="Germany") %>% diagnose_category() %>% flextable()
+  
+```
+
+
+#### France: Descriptive Statistics and Data Vizualization
+* Numeric Variables
+
+```{r}
+short_list %>% filter(country =="France") %>% diagnose_numeric() %>% flextable()
+  
+```
+* categorical Variables
+
+```{r}
+short_list %>% filter(country =="France") %>% diagnose_category() %>% flextable()
+  
+```
