@@ -1,0 +1,58 @@
+---
+title: "Transportation Version 2"
+author: "David Jackson"
+date: "2/12/2022"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+library(corrplot)
+library(ggpubr)
+```
+
+## Read and clean data
+
+```{r}
+df <- read.csv("./applemobilitytrends-2021-07-06.csv")
+df <- df %>% dplyr::filter(region == 'Germany')
+# df_subset <- subset(df,region=="Germany")
+```
+```{r}
+df <- df %>% dplyr::select(-c(1,2,4,5,6))
+```
+
+## Pivot Longer and rename columns
+
+```{r}
+df_longer <- df %>% tidyr::pivot_longer(cols = X2020.01.13:X2021.07.06,names_to = "Date",values_to = "Mobility") %>% dplyr::select(Date,transportation_type,Mobility)
+```
+
+## Clean up dates
+
+```{r}
+df_longer$Date <- gsub("X","",df_longer$Date)
+df_longer$Date <- gsub("\\.","-",df_longer$Date)
+df_longer$Date <- as.Date(df_longer$Date)
+```
+
+## Create Table with columns: Date, Walking, Driving, and Transit
+
+```{r}
+data <- df_longer  %>% tidyr::pivot_wider(names_from = transportation_type,values_from = Mobility) %>% na.omit()
+```
+
+## Summarize Data:
+
+```{r}
+summary(data)
+```
+```{r}
+sd(data$driving) # Driving
+sd(data$transit) # Transit
+sd(data$walking) # Walking
+```
+
